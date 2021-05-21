@@ -8,9 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 @RestController
@@ -31,9 +32,9 @@ public class ControllerTransaction {
     @PostMapping
     public ResponseEntity<Object> create(
             @PathVariable Long id_card,
-            @RequestBody @NotBlank String email,
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String token
-    ){
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+            @AuthenticationPrincipal Jwt jwt
+            ){
         try {
             card = propostaApi.getCard(id_card, token);
         }catch (FeignException.Unauthorized feu){
@@ -43,6 +44,7 @@ public class ControllerTransaction {
             throw new ApiErrorException(HttpStatus.BAD_REQUEST, "Algo saiu errado com o servidor de propostas");
         }
 
+        String email = (String) jwt.getClaims().get("email");
         LegacyApiTransaction.RequestTransaction requestTransaction = new LegacyApiTransaction.RequestTransaction(
                 card.getNumber(),
                 email
